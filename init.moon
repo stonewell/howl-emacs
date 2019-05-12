@@ -4,6 +4,59 @@ import bindings from howl
 
 state = bundle_load 'state'
 
+cancel = (editor) ->
+  editor.selection.persistent = false
+  editor.selection\remove!
+  return -> true
+
+push_mark = (editor) ->
+  editor.selection.persistent = true
+
+cut = (editor) ->
+  command.run 'editor-cut'
+  cancel editor
+  return ->true
+
+copy = (editor) ->
+  command.run 'editor-copy'
+  cancel editor
+  return ->true
+
+paste = (editor) ->
+  command.run 'editor-paste'
+  cancel editor
+  return ->true
+
+sel_paste = (editor) ->
+  howl.command.run 'editor-paste..'
+  cancel editor
+  return ->true
+
+ctrl_x_map = {
+  ctrl_f: 'open'
+  ctrl_s: 'save'
+  ctrl_w: 'save-as'
+  ctrl_c: 'quit'
+  b: 'switch-buffer'
+  k: 'buffer-close'
+  h: 'editor-select-all'
+  o: 'view-next'
+  '0': 'view-close'
+  '2': 'view-new-below'
+  '3': 'view-new-right-of'
+}
+
+ctrl_u_map = {
+  on_unhandled: (event, source, translations) ->
+    char = event.character
+    modifiers = event.control or event.alt
+    if char and not modifiers
+      if char\match '^%d$'
+        state.add_number tonumber char
+
+      return -> true
+}
+
 key_map = {
   editor: {
       ctrl_b: 'cursor-left'
@@ -15,13 +68,13 @@ key_map = {
       ctrl_e: 'cursor-line-end'
       ctrl_a: 'cursor-home'
 
-      ctrl_y: 'editor-paste'
-      alt_w: 'editor-copy'
-      alt_y: 'editor-paste..'
+      ctrl_w: cut
+      alt_w: copy
+      ctrl_y: paste
+      alt_y: sel_paste
 
       ctrl_d: 'editor-delete-forward'
       ctrl_k: 'editor-cut-to-end-of-line'
-      ctrl_w: 'editor-cut'
 
       ctrl_s: 'buffer-search-forward'
       ctrl_r: 'buffer-search-backward'
@@ -32,29 +85,22 @@ key_map = {
         alt_g: 'cursor-goto-line'
       }
 
-   }
+      ctrl_l: (editor) -> editor.line_at_center = editor.cursor.line
 
-   ctrl_x: {
-      ctrl_f: 'open'
-      ctrl_s: 'save'
-      ctrl_w: 'save-as'
-      b: 'switch-buffer'
-      k: 'buffer-close'
-      h: 'editor-select-all'
-      o: 'view-next'
-      backslash: 'view-new-right-of'
-      minus: 'view-new-below'
-      ctrl_c: 'quit'
-      c: 'view-close'
-   },
+      ctrl_x: (editor) -> bindings.push ctrl_x_map, {pop: true}
+
+      ctrl_period: push_mark
+      ctrl_g: cancel
+      
+   }
 
    for_os: {
       osx: {
         editor: {
           alt_2262: 'cursor-page-up'
 
-          alt_16785937: 'editor-copy'
-          alt_165: 'editor-paste..'
+          alt_16785937: copy
+          alt_165: sel_paste
 
           alt_169: {
             alt_169: 'cursor-goto-line'
@@ -76,6 +122,7 @@ emacs_commands = {
             editor.selection.includes_cursor = true
             editor.indicator.emacs.label = 'Emacs On'
         bindings.push key_map
+
         state.activate(app.editor)
   }
 
@@ -102,7 +149,7 @@ unload = ->
 
 -- Hookup
 Editor.register_indicator 'emacs', 'bottom_left'
-state.init 'command', 'command'
+state.init!
 
 command.register cmd for cmd in *emacs_commands
 
