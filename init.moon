@@ -5,32 +5,31 @@ import bindings from howl
 state = bundle_load 'state'
 
 cancel = (editor) ->
-  editor.selection.persistent = false
-  editor.selection\remove!
-  return -> true
+  if editor and editor.selection
+    editor.selection.persistent = false
+    editor.selection\remove!
+
+  if app.window.command_line.showing
+     app.window.command_line\abort_all!
 
 push_mark = (editor) ->
   editor.selection.persistent = true
 
 cut = (editor) ->
-  command.run 'editor-cut'
+  editor\cut!
   cancel editor
-  return ->true
 
 copy = (editor) ->
-  command.run 'editor-copy'
+  editor\copy!
   cancel editor
-  return ->true
 
 paste = (editor) ->
-  command.run 'editor-paste'
+  editor\paste!
   cancel editor
-  return ->true
 
 sel_paste = (editor) ->
   howl.command.run 'editor-paste..'
   cancel editor
-  return ->true
 
 ctrl_x_map = {
   ctrl_f: 'open'
@@ -85,16 +84,21 @@ key_map = {
         alt_g: 'cursor-goto-line'
       }
 
+      alt_x: 'run'
+
       ctrl_l: (editor) -> editor.line_at_center = editor.cursor.line
 
       ctrl_x: (editor) -> bindings.push ctrl_x_map, {pop: true}
 
       ctrl_period: push_mark
       ctrl_g: cancel
-      
    }
 
-   for_os: {
+  commandline: {
+    ctrl_g: cancel
+  }
+
+  for_os: {
       osx: {
         editor: {
           alt_2262: 'cursor-page-up'
@@ -119,9 +123,17 @@ emacs_commands = {
     handler: ->
       unless state.active
         for editor in *howl.app.editors
-            editor.selection.includes_cursor = true
+            editor.selection.includes_cursor = false
             editor.indicator.emacs.label = 'Emacs On'
         bindings.push key_map
+
+        command_line = app.window.command_line
+        command_line.old_handle_keypress = command_line.handle_keypress
+        command_line.handle_keypress = (event) =>
+          val = command_line\old_handle_keypress event
+          if not val
+             return true if bindings.dispatch event, 'commandline', {key_map}, command_line
+          return val
 
         state.activate(app.editor)
   }
@@ -137,7 +149,6 @@ emacs_commands = {
               .indicator.emacs.label = ''
         bindings.pop!
   }
-
 }
 
 unload = ->
