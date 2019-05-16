@@ -130,9 +130,9 @@ emacs_commands = {
         command_line = app.window.command_line
         command_line.old_handle_keypress = command_line.handle_keypress
         command_line.handle_keypress = (event) =>
-          val = command_line\old_handle_keypress event
+          val = @old_handle_keypress event
           if not val
-             return true if bindings.dispatch event, 'commandline', {key_map}, command_line
+             return true if bindings.dispatch event, 'commandline', {key_map}, self
           return val
 
         state.activate(app.editor)
