@@ -1,4 +1,4 @@
-import app, signal, config, command from howl
+import app, signal, config, command, interact from howl
 import Editor from howl.ui
 import bindings from howl
 
@@ -30,6 +30,15 @@ paste = (editor) ->
 sel_paste = (editor) ->
   howl.command.run 'editor-paste..'
   cancel editor
+
+run_history_cmd = ->
+  command_line = app.window.command_line
+  text = command_line.text
+  command_line\clear!
+  command_line\write_spillover text
+  cmd_string = interact.select_historical_command!
+  if cmd_string
+    command_line\write cmd_string.stripped
 
 ctrl_x_map = {
   ctrl_f: 'open'
@@ -96,6 +105,8 @@ key_map = {
 
   commandline: {
     ctrl_g: cancel
+    ctrl_n: run_history_cmd
+    ctrl_p: run_history_cmd
   }
 
   for_os: {
