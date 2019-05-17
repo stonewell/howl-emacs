@@ -36,7 +36,7 @@ ctrl_x_map = {
   ctrl_s: 'save'
   ctrl_w: 'save-as'
   ctrl_c: 'quit'
-  b: 'switch-buffer'
+  b: 'open-recent'
   k: 'buffer-close'
   h: 'editor-select-all'
   o: 'view-next'
@@ -148,6 +148,7 @@ emacs_commands = {
             with editor
               .indicator.emacs.label = ''
         bindings.pop!
+        command_line.handle_keypress = command_line.old_handle_keypress
   }
 }
 
