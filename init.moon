@@ -1,4 +1,4 @@
-import app, signal, config, command from howl
+import app, signal, config, command, clipboard from howl
 import Editor from howl.ui
 import bindings from howl
 
@@ -29,6 +29,21 @@ paste = (editor) ->
 
 sel_paste = (editor) ->
   howl.command.run 'editor-paste..'
+  cancel editor
+
+kill_to_end_of_line = (editor) ->
+  cur_line = editor.current_line
+
+  if cur_line.size == 0
+    editor\delete_line!
+  elseif editor.cursor.pos == cur_line.end_pos
+    editor\join_lines!
+  else
+    text = cur_line.text\usub editor.cursor.column_index, -1
+    if text.ulen > 0
+      cur_line.text = cur_line.text\usub 1, editor.cursor.column_index - 1
+      clipboard.push text: text, whole_lines: false
+
   cancel editor
 
 ctrl_x_map = {
@@ -73,7 +88,7 @@ key_map = {
       alt_y: sel_paste
 
       ctrl_d: 'editor-delete-forward'
-      ctrl_k: 'editor-cut-to-end-of-line'
+      ctrl_k: kill_to_end_of_line
 
       ctrl_s: 'buffer-search-forward'
       ctrl_r: 'buffer-search-backward'
@@ -148,6 +163,7 @@ emacs_commands = {
             with editor
               .indicator.emacs.label = ''
         bindings.pop!
+        command_line = app.window.command_line
         command_line.handle_keypress = command_line.old_handle_keypress
   }
 }
