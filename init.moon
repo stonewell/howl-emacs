@@ -36,8 +36,9 @@ sel_paste = (editor) ->
 run_history_cmd = ->
   command_line = app.window.command_line
 
-  if command_line.current.activity_spec.factory.__name != "CommandInput"
-    return true
+  should_run = (command_line.current and command_line.current.activity_spec and command_line.current.activity_spec.factory and command_line.current.activity_spec.factory.__name == "CommandInput")
+
+  return true unless should_run
 
   text = command_line.text
   command_line\clear!
