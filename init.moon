@@ -9,6 +9,8 @@ cancel = (editor) ->
     editor.selection.persistent = false
     editor.selection\remove!
 
+  app.editor\cancel_preview!
+
   if app.window.command_line.showing
      app.window.command_line\abort_all!
 
