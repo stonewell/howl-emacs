@@ -35,6 +35,10 @@ sel_paste = (editor) ->
 
 run_history_cmd = ->
   command_line = app.window.command_line
+
+  if command_line.current.activity_spec.factory.__name != "CommandInput"
+    return true
+
   text = command_line.text
   command_line\clear!
   command_line\write_spillover text
